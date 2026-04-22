@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a3a5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Menetlevél">
+<title>Coolvarko Menetlevél</title>
+
+<!-- PWA Manifest inline -->
+<script>
+const manifestData = {
+  name: "Coolvarko Menetlevél",
+  short_name: "Menetlevél",
+  description: "Digitális útnyilvántartó – NAV-álló",
+  start_url: "./",
+  display: "standalone",
+  background_color: "#0f2035",
+  theme_color: "#1a3a5c",
+  orientation: "portrait",
+  icons: [
+    { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%231a3a5c'/%3E%3Ctext x='96' y='130' font-size='110' text-anchor='middle' fill='%23f0a500'%3E🚗%3C/text%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" },
+    { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%231a3a5c'/%3E%3Ctext x='256' y='340' font-size='280' text-anchor='middle' fill='%23f0a500'%3E🚗%3C/text%3E%3C/svg%3E", sizes: "512x512", type: "image/svg+xml" }
+  ]
+};
+const blob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+const manifestURL = URL.createObjectURL(blob);
+document.write(`<link rel="manifest" href="${manifestURL}">`);
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+:root {
+  --navy: #0f2035;
+  --navy2: #1a3a5c;
+  --navy3: #234d7a;
+  --gold: #f0a500;
+  --gold2: #ffc235;
+  --white: #f5f7fa;
+  --gray: #8fa3b8;
+  --light: #d0dce8;
+  --green: #2ecc71;
+  --red: #e74c3c;
+  --orange: #e67e22;
+  --card: rgba(26, 58, 92, 0.6);
+  --border: rgba(240, 165, 0, 0.2);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow-x: hidden;
+}
+
+/* BG texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 20% 0%, rgba(240,165,0,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(35,77,122,0.4) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding-bottom: 80px; }
+
+/* HEADER */
+.header {
+  background: linear-gradient(135deg, var(--navy2), var(--navy3));
+  padding: 20px 20px 16px;
+  border-bottom: 2px solid var(--gold);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.header-top { display: flex; justify-content: space-between; align-items: center; }
+.logo { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--gold); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
+.header h1 { font-size: 20px; font-weight: 700; color: var(--white); margin-top: 2px; }
+.header-date { font-size: 12px; color: var(--gray); margin-top: 2px; font-family: 'IBM Plex Mono', monospace; }
+
+/* TABS */
+.tabs {
+  display: flex;
+  background: var(--navy2);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 88px;
+  z-index: 99;
+}
+.tab {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--gray);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab:active { background: rgba(240,165,0,0.05); }
+
+/* PAGES */
+.page { display: none; padding: 16px; }
+.page.active { display: block; }
+
+/* CARDS */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  backdrop-filter: blur(10px);
+}
+.card-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* FORM ELEMENTS */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 6px;
+}
+.form-label span { color: var(--red); }
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background: rgba(15,32,53,0.8);
+  border: 1px solid rgba(143,163,184,0.3);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 15px;
+  color: var(--white);
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--gold);
+  background: rgba(15,32,53,0.95);
+}
+.form-select option { background: var(--navy); }
+.form-textarea { resize: none; min-height: 70px; }
+
+/* GPS button */
+.gps-row { display: flex; gap: 8px; }
+.gps-row .form-input { flex: 1; }
+.btn-gps {
+  background: var(--navy3);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: var(--gold);
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-gps:active { background: rgba(240,165,0,0.2); transform: scale(0.95); }
+.btn-gps.loading { animation: pulse 1s infinite; }
+
+/* KM input */
+.km-row { display: flex; gap: 8px; align-items: center; }
+.km-row .form-input { flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; }
+.km-unit { font-size: 13px; color: var(--gray); flex-shrink: 0; }
+
+/* STATUS badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.status-open { background: rgba(230,126,34,0.2); color: var(--orange); border: 1px solid var(--orange); }
+.status-closed { background: rgba(46,204,113,0.15); color: var(--green); border: 1px solid var(--green); }
+
+/* BUTTONS */
+.btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: var(--navy);
+}
+.btn-primary:hover { filter: brightness(1.05); }
+.btn-success {
+  background: linear-gradient(135deg, #27ae60, var(--green));
+  color: white;
+}
+.btn-danger {
+  background: linear-gradient(135deg, #c0392b, var(--red));
+  color: white;
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--gray);
+}
+.btn-sm {
+  padding: 8px 14px;
+  font-size: 12px;
+  width: auto;
+  border-radius: 6px;
+}
+
+/* ACTIVE TRIP CARD */
+.active-trip {
+  background: linear-gradient(135deg, rgba(230,126,34,0.15), rgba(240,165,0,0.1));
+  border: 1px solid var(--orange);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.active-trip-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.active-trip-title { font-size: 13px; font-weight: 700; color: var(--orange); letter-spacing: 1px; text-transform: uppercase; }
+.active-trip-elapsed { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; color: var(--gold); }
+.active-trip-info { font-size: 13px; color: var(--light); margin-top: 4px; }
+.active-trip-info strong { color: var(--white); }
+
+/* TRIP LIST */
+.trip-item {
+  background: rgba(15,32,53,0.5);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.trip-item:active { border-color: var(--gold); }
+.trip-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.trip-driver { font-size: 13px; font-weight: 700; color: var(--white); }
+.trip-date { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--gray); }
+.trip-route { font-size: 12px; color: var(--light); margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+.trip-route-arrow { color: var(--gold); }
+.trip-meta { display: flex; gap: 10px; font-size: 11px; color: var(--gray); margin-top: 4px; }
+.trip-km { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--gold2); }
+
+/* STATS */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.stat-box {
+  background: rgba(15,32,53,0.6);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+.stat-value { font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 600; color: var(--gold); }
+.stat-label { font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+/* MONTH SELECTOR */
+.month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.month-nav button { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--gray); padding: 6px 12px; cursor: pointer; font-size: 16px; }
+.month-nav button:active { border-color: var(--gold); color: var(--gold); }
+.month-label { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600; color: var(--white); }
+
+/* EXPORT */
+.export-options { display: flex; gap: 8px; }
+.export-options .btn { flex: 1; }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--navy3);
+  border: 1px solid var(--gold);
+  color: var(--white);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--navy2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding: 8px 0;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 200;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--gray);
+  transition: color 0.2s;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.nav-item.active { color: var(--gold); }
+.nav-item .icon { font-size: 22px; }
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 500;
+  display: none;
+  align-items: flex-end;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--navy2);
+  border-top: 2px solid var(--gold);
+  border-radius: 20px 20px 0 0;
+  padding: 20px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+.modal-title { font-size: 16px; font-weight: 700; color: var(--gold); margin-bottom: 16px; }
+
+/* DIVIDER */
+.divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+/* INFO ROW */
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(143,163,184,0.1); }
+.info-row:last-child { border-bottom: none; }
+.info-key { font-size: 12px; color: var(--gray); }
+.info-val { font-size: 13px; font-weight: 600; color: var(--white); text-align: right; max-width: 60%; }
+
+/* EMPTY STATE */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--gray); }
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.empty-state p { font-size: 14px; line-height: 1.5; }
+
+/* ANIMATIONS */
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.animate-in { animation: fadeIn 0.3s ease forwards; }
+
+/* SECTION HEADER */
+.section-header { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray); margin: 16px 0 8px; padding-left: 2px; }
+
+/* VEHICLE BADGE */
+.vehicle-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(240,165,0,0.1); border: 1px solid var(--gold);
+  border-radius: 6px; padding: 4px 10px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: var(--gold);
+}
+
+/* INSTALL BANNER */
+.install-banner {
+  background: linear-gradient(135deg, rgba(240,165,0,0.15), rgba(240,165,0,0.05));
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.install-banner .icon { font-size: 24px; flex-shrink: 0; }
+.install-banner p { font-size: 12px; color: var(--light); line-height: 1.4; }
+.install-banner strong { color: var(--gold); }
+.install-banner button {
+  background: var(--gold); color: var(--navy); border: none;
+  padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 12px;
+  cursor: pointer; flex-shrink: 0; margin-left: auto;
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="logo">⚙ Coolvarko Kft.</div>
+        <h1>🚗 Menetlevél</h1>
+      </div>
+      <div id="vehicleBadge" class="vehicle-badge">—</div>
+    </div>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+
+  <!-- PAGES -->
+
+  <!-- PAGE: ÚT RÖGZÍTÉS -->
+  <div class="page active" id="page-record">
+    <div style="height:12px"></div>
+
+    <div id="installBanner" class="install-banner" style="display:none">
+      <span class="icon">📲</span>
+      <p><strong>Telepítsd főképernyőre!</strong><br>Böngésző → Megosztás → „Főképernyőhöz adás"</p>
+      <button onclick="document.getElementById('installBanner').style.display='none'">✕</button>
+    </div>
+
+    <!-- Active trip indicator -->
+    <div id="activeTripCard" style="display:none" class="active-trip animate-in">
+      <div class="active-trip-header">
+        <span class="active-trip-title">🟠 Folyamatban lévő út</span>
+        <span class="status-badge status-open">Nyitott</span>
+      </div>
+      <div class="active-trip-elapsed" id="elapsedTime">00:00:00</div>
+      <div class="active-trip-info" id="activeTripInfo"></div>
+    </div>
+
+    <!-- New trip form -->
+    <div class="card" id="newTripCard">
+      <div class="card-title">📋 Új út rögzítése</div>
+
+      <div class="form-group">
+        <label class="form-label">Sofőr neve <span>*</span></label>
+        <select class="form-select" id="driverSelect">
+          <option value="">— Válaszd ki a neved —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Jármű rendszám <span>*</span></label>
+        <select class="form-select" id="vehicleSelect" onchange="updateVehicleBadge()">
+          <option value="">— Válassz járművet —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Km-óra állás (indulás) <span>*</span></label>
+        <div class="km-row">
+          <input type="number" class="form-input" id="kmStart" placeholder="pl. 87450" inputmode="numeric">
+          <span class="km-unit">km</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Indulási hely <span>*</span></label>
+        <div class="gps-row">
+          <input type="text" class="form-input" id="fromLocation" placeholder="Cím vagy hely neve">
+          <button class="btn-gps" id="gpsFromBtn" onclick="getGPS('from')" title="GPS helymeghatározás">📍</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Célállomás <span>*</span></label>
+        <div class="gps-row">
+          <input type="text" class="form-input" id="toLocation" placeholder="Cím vagy hely neve">
+          <button class="btn-gps" id="gpsToBtn" onclick="getGPS('to')" title="GPS helymeghatározás">📍</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Utazás célja <span>*</span></label>
+        <select class="form-select" id="tripPurpose">
+          <option value="">— Válassz célt —</option>
+          <option value="Munkaterület – anyagbeszerzés">Munkaterület – anyagbeszerzés</option>
+          <option value="Munkaterület – munka">Munkaterület – munka</option>
+          <option value="Ügyfél látogatás">Ügyfél látogatás</option>
+          <option value="Hatóság / hivatal">Hatóság / hivatal</option>
+          <option value="Alvállalkozó / partner">Alvállalkozó / partner</option>
+          <option value="Egyéb céges út">Egyéb céges út</option>
+          <option value="Magáncélú út">Magáncélú út</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Megjegyzés</label>
+        <textarea class="form-textarea" id="tripNote" placeholder="pl. munkaszám, ügyfél neve…"></textarea>
+      </div>
+
+      <button class="btn btn-primary" onclick="startTrip()">🚦 Út megkezdése</button>
+    </div>
+
+    <!-- Arrive form -->
+    <div class="card" id="arriveCard" style="display:none">
+      <div class="card-title">🏁 Érkezés rögzítése</div>
+
+      <div class="form-group">
+        <label class="form-label">Érkezési hely</label>
+        <div class="gps-row">
+          <input type="text" class="form-input" id="arriveLocation" placeholder="Cím automatikusan, vagy add meg">
+          <button class="btn-gps" id="gpsArriveBtn" onclick="getGPS('arrive')" title="GPS helymeghatározás">📍</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Km-óra állás (érkezés) <span>*</span></label>
+        <div class="km-row">
+          <input type="number" class="form-input" id="kmEnd" placeholder="pl. 87510" inputmode="numeric">
+          <span class="km-unit">km</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Megjegyzés érkezéskor</label>
+        <textarea class="form-textarea" id="arriveNote" placeholder="opcionális…" style="min-height:50px"></textarea>
+      </div>
+
+      <button class="btn btn-success" onclick="endTrip()" style="margin-bottom:8px">✅ Út lezárása</button>
+      <button class="btn btn-outline" onclick="cancelTrip()">❌ Mégse / töröl</button>
+    </div>
+  </div>
+
+  <!-- PAGE: NAPLÓ -->
+  <div class="page" id="page-log">
+    <div style="height:12px"></div>
+
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)">◀</button>
+      <span class="month-label" id="monthLabel"></span>
+      <button onclick="changeMonth(1)">▶</button>
+    </div>
+
+    <div class="stats-grid" id="monthStats"></div>
+
+    <div class="section-header" id="logSectionHeader"></div>
+    <div id="tripList"></div>
+  </div>
+
+  <!-- PAGE: ADMIN / EXPORT -->
+  <div class="page" id="page-admin">
+    <div style="height:12px"></div>
+
+    <div class="card">
+      <div class="card-title">⚙️ Járművek kezelése</div>
+      <div id="vehicleList" style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px">
+        <input type="text" class="form-input" id="newVehicle" placeholder="Rendszám (pl. ABC-123)" style="flex:1">
+        <button class="btn btn-primary btn-sm" onclick="addVehicle()">+ Hozzáad</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">👥 Sofőrök kezelése</div>
+      <div id="driverList" style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px">
+        <input type="text" class="form-input" id="newDriver" placeholder="Sofőr neve" style="flex:1">
+        <button class="btn btn-primary btn-sm" onclick="addDriver()">+ Hozzáad</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📤 Export / Nyomtatás</div>
+      <div class="form-group">
+        <label class="form-label">Időszak</label>
+        <select class="form-select" id="exportMonth"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sofőr szűrő</label>
+        <select class="form-select" id="exportDriver">
+          <option value="">Összes sofőr</option>
+        </select>
+      </div>
+      <div class="export-options">
+        <button class="btn btn-primary" onclick="exportPDF()">🖨 PDF / Nyomtatás</button>
+        <button class="btn btn-outline" onclick="exportCSV()">📊 CSV</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ℹ️ Cégadatok</div>
+      <div class="info-row"><span class="info-key">Cégnév</span><span class="info-val">Coolvarko Kft.</span></div>
+      <div class="info-row"><span class="info-key">Adószám</span><span class="info-val">24702098-2-07</span></div>
+      <div class="info-row"><span class="info-key">Székhely</span><span class="info-val">8146 Jenő, Nagy Sándor u. 45.</span></div>
+      <div class="info-row"><span class="info-key">Verziószám</span><span class="info-val" id="appVersion"></span></div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="showPage('record',this)" id="nav-record">
+    <span class="icon">🚗</span>Út rögzítés
+  </div>
+  <div class="nav-item" onclick="showPage('log',this)" id="nav-log">
+    <span class="icon">📋</span>Napló
+  </div>
+  <div class="nav-item" onclick="showPage('admin',this)" id="nav-admin">
+    <span class="icon">⚙️</span>Admin
+  </div>
+</div>
+
+<!-- TRIP DETAIL MODAL -->
+<div class="modal-overlay" id="tripModal" onclick="if(event.target===this)closeTripModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">Út részletei</div>
+    <div id="modalContent"></div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn btn-danger btn-sm" onclick="deleteCurrentTrip()">🗑 Töröl</button>
+      <button class="btn btn-outline btn-sm" onclick="closeTripModal()" style="flex:1">Bezár</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATA LAYER – localStorage
+// ============================================================
+const DB = {
+  get: (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) { toast('⚠️ Tároló hiba!'); } }
+};
+
+let trips = DB.get('cv_trips', []);
+let drivers = DB.get('cv_drivers', ['Kovács Tamás', 'Ganesz Richárd']);
+let vehicles = DB.get('cv_vehicles', []);
+let activeTrip = DB.get('cv_active', null);
+let currentViewMonth = new Date().getMonth();
+let currentViewYear = new Date().getFullYear();
+let currentModalTripId = null;
+let elapsedTimer = null;
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  updateHeaderDate();
+  populateSelects();
+  renderActiveTripUI();
+  renderLog();
+  renderAdminLists();
+  populateExportOptions();
+  updateVehicleBadge();
+
+  // Install banner for non-standalone
+  if (!window.matchMedia('(display-mode: standalone)').matches && !navigator.standalone) {
+    setTimeout(() => { document.getElementById('installBanner').style.display = 'flex'; }, 2000);
+  }
+
+  // Version
+  document.getElementById('appVersion').textContent = 'v1.0 – ' + new Date().toLocaleDateString('hu-HU');
+
+  // Service worker
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      const CACHE = 'cv-menetlevel-v1';
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+      });
+    `;
+    const swBlob = new Blob([swCode], {type:'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+  }
+}
+
+function updateHeaderDate() {
+  const now = new Date();
+  const opts = {weekday:'long', year:'numeric', month:'long', day:'numeric'};
+  document.getElementById('headerDate').textContent = now.toLocaleDateString('hu-HU', opts);
+}
+
+function populateSelects() {
+  const ds = document.getElementById('driverSelect');
+  ds.innerHTML = '<option value="">— Válaszd ki a neved —</option>';
+  drivers.forEach(d => ds.innerHTML += `<option value="${d}">${d}</option>`);
+
+  const vs = document.getElementById('vehicleSelect');
+  vs.innerHTML = '<option value="">— Válassz járművet —</option>';
+  vehicles.forEach(v => vs.innerHTML += `<option value="${v}">${v}</option>`);
+
+  const ed = document.getElementById('exportDriver');
+  ed.innerHTML = '<option value="">Összes sofőr</option>';
+  drivers.forEach(d => ed.innerHTML += `<option value="${d}">${d}</option>`);
+}
+
+function updateVehicleBadge() {
+  const v = document.getElementById('vehicleSelect')?.value;
+  document.getElementById('vehicleBadge').textContent = v || '—';
+}
+
+// ============================================================
+// GPS
+// ============================================================
+async function getGPS(target) {
+  const btnId = target === 'from' ? 'gpsFromBtn' : target === 'to' ? 'gpsToBtn' : 'gpsArriveBtn';
+  const inputId = target === 'from' ? 'fromLocation' : target === 'to' ? 'toLocation' : 'arriveLocation';
+  const btn = document.getElementById(btnId);
+  const input = document.getElementById(inputId);
+
+  if (!navigator.geolocation) { toast('❌ GPS nem elérhető'); return; }
+
+  btn.classList.add('loading');
+  btn.textContent = '⏳';
+  input.placeholder = 'GPS helymeghatározás…';
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      btn.classList.remove('loading');
+      btn.textContent = '✅';
+      
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=hu`);
+        const data = await r.json();
+        const addr = data.address;
+        let label = '';
+        if (addr.road) label = (addr.house_number ? addr.road + ' ' + addr.house_number : addr.road);
+        if (addr.city || addr.town || addr.village) label = (addr.city || addr.town || addr.village) + (label ? ', ' + label : '');
+        input.value = label || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        toast('📍 Helyszín rögzítve');
+      } catch {
+        input.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        toast('📍 Koordináta rögzítve');
+      }
+      setTimeout(() => { btn.textContent = '📍'; }, 2000);
+    },
+    (err) => {
+      btn.classList.remove('loading');
+      btn.textContent = '📍';
+      input.placeholder = 'Cím vagy hely neve';
+      const msgs = { 1: 'GPS engedély megtagadva', 2: 'GPS nem elérhető', 3: 'GPS időtúllépés' };
+      toast('❌ ' + (msgs[err.code] || 'GPS hiba'));
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+  );
+}
+
+// ============================================================
+// TRIP MANAGEMENT
+// ============================================================
+function startTrip() {
+  if (activeTrip) { toast('⚠️ Már van nyitott út!'); return; }
+
+  const driver = document.getElementById('driverSelect').value;
+  const vehicle = document.getElementById('vehicleSelect').value;
+  const kmStart = document.getElementById('kmStart').value;
+  const fromLoc = document.getElementById('fromLocation').value.trim();
+  const toLoc = document.getElementById('toLocation').value.trim();
+  const purpose = document.getElementById('tripPurpose').value;
+
+  if (!driver) { toast('⚠️ Válaszd ki a neved!'); return; }
+  if (!vehicle) { toast('⚠️ Válassz járművet!'); return; }
+  if (!kmStart) { toast('⚠️ Add meg a km-óra állást!'); return; }
+  if (!fromLoc) { toast('⚠️ Add meg az indulási helyet!'); return; }
+  if (!toLoc) { toast('⚠️ Add meg a célállomást!'); return; }
+  if (!purpose) { toast('⚠️ Add meg az utazás célját!'); return; }
+
+  activeTrip = {
+    id: Date.now().toString(),
+    driver, vehicle,
+    kmStart: parseInt(kmStart),
+    fromLoc, toLoc, purpose,
+    note: document.getElementById('tripNote').value.trim(),
+    startTime: new Date().toISOString(),
+    endTime: null, kmEnd: null, arriveLocation: null, arriveNote: null,
+    status: 'open'
+  };
+  DB.set('cv_active', activeTrip);
+
+  // Reset form
+  document.getElementById('kmStart').value = '';
+  document.getElementById('fromLocation').value = '';
+  document.getElementById('toLocation').value = '';
+  document.getElementById('tripNote').value = '';
+  document.getElementById('tripPurpose').value = '';
+
+  renderActiveTripUI();
+  toast('🚦 Út elindítva!');
+}
+
+function endTrip() {
+  if (!activeTrip) return;
+
+  const kmEnd = document.getElementById('kmEnd').value;
+  const arriveLoc = document.getElementById('arriveLocation').value.trim();
+  const arriveNote = document.getElementById('arriveNote').value.trim();
+
+  if (!kmEnd) { toast('⚠️ Add meg az érkezési km-óra állást!'); return; }
+  const kmEndN = parseInt(kmEnd);
+  if (kmEndN < activeTrip.kmStart) { toast('⚠️ Érkezési km nem lehet kisebb az indulásitól!'); return; }
+
+  activeTrip.endTime = new Date().toISOString();
+  activeTrip.kmEnd = kmEndN;
+  activeTrip.arriveLocation = arriveLoc || activeTrip.toLoc;
+  activeTrip.arriveNote = arriveNote;
+  activeTrip.status = 'closed';
+  activeTrip.kmDiff = kmEndN - activeTrip.kmStart;
+
+  trips.unshift(activeTrip);
+  DB.set('cv_trips', trips);
+  DB.set('cv_active', null);
+  activeTrip = null;
+
+  document.getElementById('kmEnd').value = '';
+  document.getElementById('arriveLocation').value = '';
+  document.getElementById('arriveNote').value = '';
+
+  clearInterval(elapsedTimer);
+  renderActiveTripUI();
+  renderLog();
+  toast('✅ Út sikeresen lezárva!');
+}
+
+function cancelTrip() {
+  if (!activeTrip) return;
+  if (!confirm('Biztosan törlöd a folyamatban lévő utat?')) return;
+  DB.set('cv_active', null);
+  activeTrip = null;
+  clearInterval(elapsedTimer);
+  renderActiveTripUI();
+  toast('❌ Út törölve');
+}
+
+// ============================================================
+// ACTIVE TRIP UI
+// ============================================================
+function renderActiveTripUI() {
+  const atCard = document.getElementById('activeTripCard');
+  const newCard = document.getElementById('newTripCard');
+  const arrCard = document.getElementById('arriveCard');
+
+  if (activeTrip) {
+    atCard.style.display = 'block';
+    newCard.style.display = 'none';
+    arrCard.style.display = 'block';
+
+    document.getElementById('activeTripInfo').innerHTML =
+      `<strong>${activeTrip.driver}</strong> · ${activeTrip.vehicle}<br>` +
+      `${activeTrip.fromLoc} → ${activeTrip.toLoc}<br>` +
+      `<small>Cél: ${activeTrip.purpose}</small>`;
+
+    updateVehicleBadge2(activeTrip.vehicle);
+    startElapsedTimer();
+  } else {
+    atCard.style.display = 'none';
+    newCard.style.display = 'block';
+    arrCard.style.display = 'none';
+    clearInterval(elapsedTimer);
+  }
+}
+
+function updateVehicleBadge2(v) {
+  document.getElementById('vehicleBadge').textContent = v || '—';
+}
+
+function startElapsedTimer() {
+  clearInterval(elapsedTimer);
+  elapsedTimer = setInterval(() => {
+    if (!activeTrip) return;
+    const diff = Math.floor((Date.now() - new Date(activeTrip.startTime)) / 1000);
+    const h = Math.floor(diff / 3600).toString().padStart(2,'0');
+    const m = Math.floor((diff % 3600) / 60).toString().padStart(2,'0');
+    const s = (diff % 60).toString().padStart(2,'0');
+    const el = document.getElementById('elapsedTime');
+    if (el) el.textContent = `${h}:${m}:${s}`;
+  }, 1000);
+}
+
+// ============================================================
+// LOG PAGE
+// ============================================================
+function renderLog() {
+  const monthNames = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+  document.getElementById('monthLabel').textContent = `${currentViewYear}. ${monthNames[currentViewMonth]}`;
+
+  const filtered = trips.filter(t => {
+    const d = new Date(t.startTime);
+    return d.getMonth() === currentViewMonth && d.getFullYear() === currentViewYear;
+  });
+
+  // Stats
+  const totalKm = filtered.filter(t=>t.status==='closed').reduce((s,t)=>s+(t.kmDiff||0),0);
+  const totalTrips = filtered.length;
+  const closedTrips = filtered.filter(t=>t.status==='closed').length;
+
+  document.getElementById('monthStats').innerHTML = `
+    <div class="stat-box"><div class="stat-value">${totalKm.toLocaleString('hu-HU')}</div><div class="stat-label">km összesen</div></div>
+    <div class="stat-box"><div class="stat-value">${totalTrips}</div><div class="stat-label">út db</div></div>
+  `;
+
+  document.getElementById('logSectionHeader').textContent = filtered.length > 0 ? `${filtered.length} bejegyzés` : '';
+
+  const list = document.getElementById('tripList');
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>Ebben a hónapban<br>még nincs bejegyzés.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(t => {
+    const start = new Date(t.startTime);
+    const dateStr = start.toLocaleDateString('hu-HU', {month:'short', day:'numeric', weekday:'short'});
+    const timeStr = start.toLocaleTimeString('hu-HU', {hour:'2-digit', minute:'2-digit'});
+    const km = t.kmDiff ? `${t.kmDiff} km` : '?';
+    const statusBadge = t.status === 'closed'
+      ? `<span class="status-badge status-closed">✓ Lezárt</span>`
+      : `<span class="status-badge status-open">● Nyitott</span>`;
+    return `
+    <div class="trip-item animate-in" onclick="openTripModal('${t.id}')">
+      <div class="trip-item-header">
+        <span class="trip-driver">🧑 ${t.driver}</span>
+        ${statusBadge}
+      </div>
+      <div class="trip-route">
+        <span>${t.fromLoc}</span>
+        <span class="trip-route-arrow">→</span>
+        <span>${t.toLoc}</span>
+      </div>
+      <div class="trip-meta">
+        <span>📅 ${dateStr} ${timeStr}</span>
+        <span class="trip-km">🛣 ${km}</span>
+        <span>🚗 ${t.vehicle}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function changeMonth(dir) {
+  currentViewMonth += dir;
+  if (currentViewMonth > 11) { currentViewMonth = 0; currentViewYear++; }
+  if (currentViewMonth < 0) { currentViewMonth = 11; currentViewYear--; }
+  renderLog();
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openTripModal(id) {
+  const t = trips.find(x => x.id === id);
+  if (!t) return;
+  currentModalTripId = id;
+
+  const fmt = (iso) => iso ? new Date(iso).toLocaleString('hu-HU') : '—';
+  const km = t.kmDiff ? t.kmDiff + ' km' : '—';
+
+  document.getElementById('modalTitle').textContent = `🚗 ${t.driver} – ${new Date(t.startTime).toLocaleDateString('hu-HU')}`;
+  document.getElementById('modalContent').innerHTML = `
+    <div class="info-row"><span class="info-key">Sofőr</span><span class="info-val">${t.driver}</span></div>
+    <div class="info-row"><span class="info-key">Jármű</span><span class="info-val">${t.vehicle}</span></div>
+    <div class="info-row"><span class="info-key">Indulás ideje</span><span class="info-val">${fmt(t.startTime)}</span></div>
+    <div class="info-row"><span class="info-key">Érkezés ideje</span><span class="info-val">${fmt(t.endTime)}</span></div>
+    <div class="info-row"><span class="info-key">Indulási hely</span><span class="info-val">${t.fromLoc}</span></div>
+    <div class="info-row"><span class="info-key">Célállomás</span><span class="info-val">${t.toLoc}</span></div>
+    <div class="info-row"><span class="info-key">Tényleges érkezési hely</span><span class="info-val">${t.arriveLocation || t.toLoc}</span></div>
+    <div class="info-row"><span class="info-key">Km induláskor</span><span class="info-val">${t.kmStart?.toLocaleString('hu-HU')} km</span></div>
+    <div class="info-row"><span class="info-key">Km érkezéskor</span><span class="info-val">${t.kmEnd?.toLocaleString('hu-HU') || '—'} km</span></div>
+    <div class="info-row"><span class="info-key">Megtett km</span><span class="info-val" style="color:var(--gold);font-size:16px">${km}</span></div>
+    <div class="info-row"><span class="info-key">Utazás célja</span><span class="info-val">${t.purpose}</span></div>
+    <div class="info-row"><span class="info-key">Megjegyzés</span><span class="info-val">${t.note || '—'}</span></div>
+    <div class="info-row"><span class="info-key">Állapot</span><span class="info-val">${t.status === 'closed' ? '✅ Lezárt' : '🟠 Nyitott'}</span></div>
+  `;
+  document.getElementById('tripModal').classList.add('open');
+}
+
+function closeTripModal() {
+  document.getElementById('tripModal').classList.remove('open');
+  currentModalTripId = null;
+}
+
+function deleteCurrentTrip() {
+  if (!currentModalTripId) return;
+  if (!confirm('Biztosan törlöd ezt a bejegyzést?')) return;
+  trips = trips.filter(t => t.id !== currentModalTripId);
+  DB.set('cv_trips', trips);
+  closeTripModal();
+  renderLog();
+  toast('🗑 Bejegyzés törölve');
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+function renderAdminLists() {
+  document.getElementById('driverList').innerHTML = drivers.map((d,i) =>
+    `<div class="info-row"><span class="info-val" style="color:var(--white)">${d}</span>
+    <button class="btn btn-danger btn-sm" onclick="removeDriver(${i})">✕</button></div>`
+  ).join('') || '<p style="color:var(--gray);font-size:12px">Nincs sofőr hozzáadva</p>';
+
+  document.getElementById('vehicleList').innerHTML = vehicles.map((v,i) =>
+    `<div class="info-row"><span class="vehicle-badge">${v}</span>
+    <button class="btn btn-danger btn-sm" onclick="removeVehicle(${i})">✕</button></div>`
+  ).join('') || '<p style="color:var(--gray);font-size:12px">Nincs jármű hozzáadva</p>';
+}
+
+function addDriver() {
+  const v = document.getElementById('newDriver').value.trim();
+  if (!v) return;
+  if (drivers.includes(v)) { toast('⚠️ Már szerepel a listán!'); return; }
+  drivers.push(v);
+  DB.set('cv_drivers', drivers);
+  document.getElementById('newDriver').value = '';
+  renderAdminLists();
+  populateSelects();
+  toast('👤 Sofőr hozzáadva');
+}
+
+function removeDriver(i) {
+  if (!confirm(`Törlöd: ${drivers[i]}?`)) return;
+  drivers.splice(i, 1);
+  DB.set('cv_drivers', drivers);
+  renderAdminLists();
+  populateSelects();
+}
+
+function addVehicle() {
+  const v = document.getElementById('newVehicle').value.trim().toUpperCase();
+  if (!v) return;
+  if (vehicles.includes(v)) { toast('⚠️ Már szerepel!'); return; }
+  vehicles.push(v);
+  DB.set('cv_vehicles', vehicles);
+  document.getElementById('newVehicle').value = '';
+  renderAdminLists();
+  populateSelects();
+  toast('🚗 Jármű hozzáadva');
+}
+
+function removeVehicle(i) {
+  if (!confirm(`Törlöd: ${vehicles[i]}?`)) return;
+  vehicles.splice(i, 1);
+  DB.set('cv_vehicles', vehicles);
+  renderAdminLists();
+  populateSelects();
+}
+
+function populateExportOptions() {
+  const sel = document.getElementById('exportMonth');
+  sel.innerHTML = '';
+  const now = new Date();
+  const monthNames = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const val = `${d.getFullYear()}-${d.getMonth()}`;
+    sel.innerHTML += `<option value="${val}" ${i===0?'selected':''}>${d.getFullYear()}. ${monthNames[d.getMonth()]}</option>`;
+  }
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function getExportTrips() {
+  const [yr, mo] = document.getElementById('exportMonth').value.split('-').map(Number);
+  const driver = document.getElementById('exportDriver').value;
+  return trips.filter(t => {
+    const d = new Date(t.startTime);
+    return d.getFullYear() === yr && d.getMonth() === mo && (!driver || t.driver === driver);
+  });
+}
+
+function exportCSV() {
+  const data = getExportTrips();
+  if (data.length === 0) { toast('⚠️ Nincs adat a kiválasztott időszakban'); return; }
+
+  const header = ['Dátum','Sofőr','Jármű','Indulás ideje','Érkezés ideje','Indulási hely','Célállomás','Km indulás','Km érkezés','Megtett km','Cél','Megjegyzés'];
+  const fmt = iso => iso ? new Date(iso).toLocaleString('hu-HU') : '';
+  const rows = data.map(t => [
+    new Date(t.startTime).toLocaleDateString('hu-HU'),
+    t.driver, t.vehicle,
+    fmt(t.startTime), fmt(t.endTime),
+    t.fromLoc, t.toLoc,
+    t.kmStart, t.kmEnd || '',
+    t.kmDiff || '',
+    t.purpose, t.note || ''
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`));
+
+  const csv = '\uFEFF' + [header, ...rows].map(r => r.join(';')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `coolvarko_menetlevel_${document.getElementById('exportMonth').value}.csv`;
+  a.click();
+  toast('📊 CSV letöltve');
+}
+
+function exportPDF() {
+  const data = getExportTrips();
+  if (data.length === 0) { toast('⚠️ Nincs adat'); return; }
+
+  const [yr, mo] = document.getElementById('exportMonth').value.split('-').map(Number);
+  const monthNames = ['Január','Február','Március','Április','Május','Június','Július','Augusztus','Szeptember','Október','November','December'];
+  const title = `${yr}. ${monthNames[mo]}`;
+  const totalKm = data.filter(t=>t.status==='closed').reduce((s,t)=>s+(t.kmDiff||0),0);
+  const fmt = iso => iso ? new Date(iso).toLocaleString('hu-HU') : '—';
+
+  const rows = data.map(t => `
+    <tr>
+      <td>${new Date(t.startTime).toLocaleDateString('hu-HU')}</td>
+      <td>${t.driver}</td>
+      <td>${t.vehicle}</td>
+      <td>${fmt(t.startTime).split(' ')[1]||''}</td>
+      <td>${fmt(t.endTime).split(' ')[1]||''}</td>
+      <td>${t.fromLoc}</td>
+      <td>${t.toLoc}</td>
+      <td style="text-align:right">${t.kmStart?.toLocaleString('hu-HU')}</td>
+      <td style="text-align:right">${t.kmEnd?.toLocaleString('hu-HU')||'—'}</td>
+      <td style="text-align:right;font-weight:bold">${t.kmDiff?.toLocaleString('hu-HU')||'—'}</td>
+      <td>${t.purpose}</td>
+    </tr>
+  `).join('');
+
+  const html = `<!DOCTYPE html><html lang="hu"><head><meta charset="UTF-8">
+  <title>Coolvarko Menetlevél – ${title}</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 11px; margin: 20px; color: #000; }
+    h1 { font-size: 16px; color: #1a3a5c; margin-bottom: 4px; }
+    .meta { font-size: 10px; color: #555; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #1a3a5c; color: white; padding: 6px 4px; text-align: left; font-size: 10px; }
+    td { padding: 5px 4px; border-bottom: 1px solid #ddd; vertical-align: top; }
+    tr:nth-child(even) td { background: #f5f7fa; }
+    .total { background: #1a3a5c; color: white; font-weight: bold; }
+    .total td { padding: 7px 4px; }
+    .footer { margin-top: 20px; font-size: 10px; color: #888; border-top: 1px solid #ccc; padding-top: 8px; }
+    @media print { body { margin: 10px; } }
+  </style></head><body>
+  <h1>Coolvarko Kft. – Útnyilvántartás / Menetlevél</h1>
+  <div class="meta">
+    Időszak: ${title} &nbsp;|&nbsp; Adószám: 24702098-2-07 &nbsp;|&nbsp; 
+    Cím: 8146 Jenő, Nagy Sándor u. 45. &nbsp;|&nbsp;
+    Generálva: ${new Date().toLocaleString('hu-HU')}
+  </div>
+  <table>
+    <thead><tr>
+      <th>Dátum</th><th>Sofőr</th><th>Rsz.</th><th>Ind.</th><th>Érk.</th>
+      <th>Honnan</th><th>Hová</th><th>Km ind.</th><th>Km érk.</th><th>Km</th><th>Cél</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr class="total">
+      <td colspan="9" style="text-align:right">ÖSSZESEN:</td>
+      <td style="text-align:right">${totalKm.toLocaleString('hu-HU')} km</td>
+      <td></td>
+    </tr></tfoot>
+  </table>
+  <div class="footer">
+    Aláírás (üzemeltető): ______________________ &nbsp;&nbsp;&nbsp;
+    Aláírás (vezető): ______________________ &nbsp;&nbsp;&nbsp;
+    Dátum: ${new Date().toLocaleDateString('hu-HU')}
+  </div>
+  <script>window.onload=()=>window.print();<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'log') renderLog();
+  if (name === 'admin') renderAdminLists();
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
+</body>
+</html>
