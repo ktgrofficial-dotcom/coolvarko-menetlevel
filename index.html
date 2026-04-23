@@ -419,6 +419,54 @@ body::before {
   font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; color: var(--gold);
 }
 
+/* PIN MODAL */
+.pin-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 600;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
+.pin-modal.open { display: flex; }
+.pin-box {
+  background: var(--navy2);
+  border: 2px solid var(--gold);
+  border-radius: 20px;
+  padding: 28px 24px;
+  width: 300px;
+  text-align: center;
+}
+.pin-title { font-size: 16px; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+.pin-subtitle { font-size: 12px; color: var(--gray); margin-bottom: 20px; }
+.pin-dots { display: flex; justify-content: center; gap: 12px; margin-bottom: 24px; }
+.pin-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid var(--gold);
+  background: transparent;
+  transition: background 0.15s;
+}
+.pin-dot.filled { background: var(--gold); }
+.pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pin-key {
+  background: rgba(15,32,53,0.8);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.pin-key:active { background: rgba(240,165,0,0.2); border-color: var(--gold); transform: scale(0.93); }
+.pin-key.del { font-size: 16px; color: var(--gray); }
+.pin-key.empty { visibility: hidden; }
+.pin-error { color: var(--red); font-size: 12px; margin-top: 10px; min-height: 18px; }
+
 /* INSTALL BANNER */
 .install-banner {
   background: linear-gradient(135deg, rgba(240,165,0,0.15), rgba(240,165,0,0.05));
@@ -629,6 +677,19 @@ body::before {
     </div>
 
     <div class="card">
+      <div class="card-title">🔑 PIN kód változtatása</div>
+      <div class="form-group">
+        <label class="form-label">Új PIN kód (4 számjegy)</label>
+        <input type="number" class="form-input" id="newPin" placeholder="pl. 5678" maxlength="4" inputmode="numeric" style="font-family:'IBM Plex Mono',monospace;font-size:20px;letter-spacing:8px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Megerősítés</label>
+        <input type="number" class="form-input" id="confirmPin" placeholder="Ismételd meg" maxlength="4" inputmode="numeric" style="font-family:'IBM Plex Mono',monospace;font-size:20px;letter-spacing:8px">
+      </div>
+      <button class="btn btn-primary" onclick="changePin()">💾 PIN mentése</button>
+    </div>
+
+    <div class="card">
       <div class="card-title">ℹ️ Cégadatok</div>
       <div class="info-row"><span class="info-key">Cégnév</span><span class="info-val">Coolvarko Kft.</span></div>
       <div class="info-row"><span class="info-key">Adószám</span><span class="info-val">24702098-2-07</span></div>
@@ -641,14 +702,44 @@ body::before {
 
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
-  <div class="nav-item active" onclick="showPage('record',this)" id="nav-record">
+  <div class="nav-item active" onclick="lockAdmin();showPage('record',this)" id="nav-record">
     <span class="icon">🚗</span>Út rögzítés
   </div>
-  <div class="nav-item" onclick="showPage('log',this)" id="nav-log">
+  <div class="nav-item" onclick="lockAdmin();showPage('log',this)" id="nav-log">
     <span class="icon">📋</span>Napló
   </div>
   <div class="nav-item" onclick="showPage('admin',this)" id="nav-admin">
     <span class="icon">⚙️</span>Admin
+  </div>
+</div>
+
+<!-- PIN MODAL -->
+<div class="pin-modal" id="pinModal">
+  <div class="pin-box">
+    <div class="pin-title" id="pinTitle">🔒 Admin belépés</div>
+    <div class="pin-subtitle" id="pinSubtitle">Add meg a PIN kódot</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="dot0"></div>
+      <div class="pin-dot" id="dot1"></div>
+      <div class="pin-dot" id="dot2"></div>
+      <div class="pin-dot" id="dot3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <button class="btn btn-outline" style="margin-top:14px;font-size:12px;padding:8px" onclick="closePinModal()">Mégse</button>
   </div>
 </div>
 
@@ -1212,9 +1303,18 @@ function exportPDF() {
 }
 
 // ============================================================
-// NAVIGATION
+// PIN
 // ============================================================
+let pinBuffer = '';
+let adminUnlocked = false;
+let pendingNavEl = null;
+
 function showPage(name, el) {
+  if (name === 'admin' && !adminUnlocked) {
+    pendingNavEl = el;
+    openPinModal();
+    return;
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
@@ -1222,6 +1322,96 @@ function showPage(name, el) {
   if (name === 'log') renderLog();
   if (name === 'admin') renderAdminLists();
 }
+
+function openPinModal() {
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+  document.getElementById('pinTitle').textContent = '🔒 Admin belépés';
+  document.getElementById('pinSubtitle').textContent = 'Add meg a PIN kódot';
+  document.getElementById('pinModal').classList.add('open');
+}
+
+function closePinModal() {
+  document.getElementById('pinModal').classList.remove('open');
+  pinBuffer = '';
+  updatePinDots();
+}
+
+function pinKey(k) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += k;
+  updatePinDots();
+  if (pinBuffer.length === 4) {
+    setTimeout(checkPin, 150);
+  }
+}
+
+function pinDel() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('dot' + i).classList.toggle('filled', i < pinBuffer.length);
+  }
+}
+
+function checkPin() {
+  const stored = DB.get('cv_pin', '1234');
+  if (pinBuffer === stored) {
+    adminUnlocked = true;
+    closePinModal();
+    // Navigate to admin
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-admin').classList.add('active');
+    if (pendingNavEl) pendingNavEl.classList.add('active');
+    renderAdminLists();
+    toast('✅ Admin megnyitva');
+  } else {
+    document.getElementById('pinError').textContent = '❌ Hibás PIN kód!';
+    pinBuffer = '';
+    updatePinDots();
+    // shake animation
+    const box = document.querySelector('.pin-box');
+    box.style.animation = 'none';
+    box.offsetHeight;
+    box.style.animation = 'shake 0.4s ease';
+  }
+}
+
+// Lock admin when leaving
+function lockAdmin() {
+  adminUnlocked = false;
+}
+
+function changePin() {
+  const np = document.getElementById('newPin').value.trim();
+  const cp = document.getElementById('confirmPin').value.trim();
+  if (np.length !== 4 || !/^\d{4}$/.test(np)) { toast('⚠️ A PIN pontosan 4 számjegy legyen!'); return; }
+  if (np !== cp) { toast('⚠️ A két PIN nem egyezik!'); return; }
+  DB.set('cv_pin', np);
+  document.getElementById('newPin').value = '';
+  document.getElementById('confirmPin').value = '';
+  toast('✅ PIN sikeresen megváltoztatva!');
+}
+
+// Add shake keyframe dynamically
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = '@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-10px)} 40%{transform:translateX(10px)} 60%{transform:translateX(-8px)} 80%{transform:translateX(8px)} }';
+document.head.appendChild(shakeStyle);
+
+// Lock admin when switching away from admin tab
+document.querySelectorAll && document.addEventListener('DOMContentLoaded', () => {});
+// Lock on nav away from admin
+const origShowPage = showPage;
+
+// ============================================================
+// NAVIGATION
+// ============================================================
 
 // ============================================================
 // TOAST
